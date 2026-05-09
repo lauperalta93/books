@@ -189,7 +189,7 @@
     Sumate a la comunidad ♡
   </a>
   <div class="hero-stats">
-    <div class="stat"><div class="stat-icon">▣</div><div><b id="stat-count">...</b><span>libros categorizados</span></div></div>
+    <div class="stat"><div class="stat-icon">▣</div><div><b id="stat-count">...</b><span>libros disponibles</span></div></div>
     <div class="stat-div"></div>
     <div class="stat"><div class="stat-icon">✦</div><div><b>Tropes, spice</b><span>y red flags</span></div></div>
     <div class="stat-div"></div>
@@ -506,12 +506,12 @@ function renderCards(books) {
     return;
   }
   count.innerHTML = `<strong>${books.length}</strong> libro${books.length!==1?'s':''} encontrado${books.length!==1?'s':''}`;
-  grid.innerHTML = books.map(b => {
+  grid.innerHTML = books.map((b, idx) => {
     const gc  = GENRE_CLASS[b.genre] || 'romance';
     const gi  = GENRE_ICONS[b.genre] || '📚';
     const rf  = redFlagScore(b);
     const sameTitle = b.title_en === b.title_es;
-    return `<article class="book-card" onclick="openModal(b)" style="cursor:pointer">
+    return `<article class="book-card" onclick="openModal(${idx})" style="cursor:pointer">
       <div class="card-bar ${gc}"></div>
       <div class="card-icon-strip">
         <div class="genre-icon ${gc}">${gi}</div>
@@ -595,7 +595,7 @@ async function loadBooks() {
 
     if (BOOKS.length === 0) throw new Error('No se encontraron libros en la base de datos');
 
-    document.getElementById('stat-count').textContent = '+' + BOOKS.length;
+    document.getElementById('stat-count').textContent = BOOKS.length;
     document.getElementById('loading').classList.add('hidden');
     applyFilters();
 
@@ -613,7 +613,9 @@ async function loadBooks() {
 loadBooks();
 
 
-function openModal(b) {
+function openModal(idx) {
+  var b = (typeof idx === 'number') ? BOOKS.filter(function(x){ return x.link && x.link.length > 0; })[idx] : idx;
+  if (!b) return;
   document.getElementById('modal-title-es').textContent = b.title_es || b.title || '';
   var en = (b.title_en && b.title_en !== b.title_es) ? b.title_en : '';
   var enEl = document.getElementById('modal-title-en');
