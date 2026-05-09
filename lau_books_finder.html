@@ -126,6 +126,37 @@
 
   @media(max-width:900px){.hero{min-height:520px}.hero-stats{gap:12px}.stat-div{display:none}}
   @media(max-width:560px){.filters-section,.search-wrap,.results-section{padding-left:14px;padding-right:14px}.chip{font-size:12px;padding:8px 13px}.books-grid{grid-template-columns:1fr}.notice-card{margin-left:14px;margin-right:14px;font-size:14px}.hero-stats{display:none}.hero{min-height:480px;padding:48px 16px 32px}}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(15,8,12,.72);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+  .modal-overlay.open{opacity:1;pointer-events:all}
+  .modal-sheet{background:#fff8f2;border-radius:28px 28px 0 0;width:100%;max-width:540px;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,1,.28,1);padding:0 0 40px;position:relative}
+  .modal-overlay.open .modal-sheet{transform:translateY(0)}
+  .modal-handle{width:40px;height:4px;background:rgba(99,47,53,.22);border-radius:999px;margin:14px auto 0}
+  .modal-header{padding:18px 24px 0}
+  .modal-title-es{font-family:'Playfair Display',serif;font-size:26px;font-weight:800;line-height:1.15;color:var(--ink);margin-bottom:3px}
+  .modal-title-en{font-family:'Caveat',cursive;font-size:16px;color:var(--muted);margin-bottom:6px}
+  .modal-author{font-style:italic;color:var(--muted);font-size:14px;margin-bottom:4px}
+  .modal-serie{color:var(--rose);font-weight:800;font-size:12px;margin-bottom:16px}
+  .modal-divider{height:1px;background:var(--line);margin:16px 0}
+  .modal-body{padding:0 24px}
+  .modal-label{font-size:11px;text-transform:uppercase;letter-spacing:1.8px;font-weight:900;color:#4d3534;margin-bottom:6px}
+  .modal-value{font-size:15px;color:var(--ink)}
+  .modal-tropes{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px}
+  .modal-trope{background:rgba(207,94,123,.1);color:#8a2845;font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px}
+  .modal-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+  .modal-stat{background:rgba(255,252,248,.95);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+  .modal-stat-val{font-size:18px;font-weight:800;color:var(--ink);display:block;line-height:1}
+  .modal-stat-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-top:4px;display:block}
+  .modal-dl-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#e7849e,#d75f82 60%,#c24c70);color:white;text-decoration:none;padding:16px 24px;border-radius:999px;font:800 15px 'DM Sans';margin:20px 24px 0;box-shadow:0 14px 32px rgba(207,94,123,.36);transition:transform .18s}
+  .modal-dl-btn:hover{transform:translateY(-2px)}
+  .modal-dl-btn svg{width:16px;height:16px}
+  .modal-close{position:absolute;top:16px;right:20px;width:32px;height:32px;border-radius:50%;background:rgba(99,47,53,.1);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--muted);line-height:1}
+  .modal-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+  .lang-badge-modal{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:900;padding:3px 10px;border-radius:999px;margin-bottom:12px}
+  .lang-badge-modal.ES{background:rgba(224,123,64,.15);color:#a04010}
+  .lang-badge-modal.EN{background:rgba(74,138,191,.15);color:#1a4a8f}
+
 </style>
 </head>
 <body>
@@ -247,12 +278,12 @@
     </div>
   </div>
 
-    <div class="filter-group">
-    <span class="filter-label">Idioma</span>
+  <div class="filter-group">
+    <span class="filter-label">Idioma del archivo</span>
     <div class="chips">
-      <div class="chip active" data-filter="language" data-value="all">Todos</div>
-      <div class="chip" data-filter="language" data-value="ES">ES</div>
-      <div class="chip" data-filter="language" data-value="EN">EN</div>
+      <div class="chip active" data-filter="lang" data-value="all">Todos</div>
+      <div class="chip lang-es" data-filter="lang" data-value="ES">🇦🇷 Español</div>
+      <div class="chip lang-en" data-filter="lang" data-value="EN">🇺🇸 English</div>
     </div>
   </div>
 
@@ -471,7 +502,7 @@ function renderCards(books) {
     const gi  = GENRE_ICONS[b.genre] || '📚';
     const rf  = redFlagScore(b);
     const sameTitle = b.title_en === b.title_es;
-    return `<article class="book-card">
+    return `<article class="book-card" onclick="openModal(b)" style="cursor:pointer">
       <div class="card-bar ${gc}"></div>
       <div class="card-icon-strip">
         <div class="genre-icon ${gc}">${gi}</div>
@@ -571,6 +602,78 @@ async function loadBooks() {
 }
 
 loadBooks();
+
+
+function openModal(b) {
+  document.getElementById('modal-title-es').textContent = b.title_es || b.title || '';
+  var en = (b.title_en && b.title_en !== b.title_es) ? b.title_en : '';
+  var enEl = document.getElementById('modal-title-en');
+  enEl.textContent = en;
+  enEl.style.display = en ? '' : 'none';
+  document.getElementById('modal-author').textContent = b.author || '';
+  var serieEl = document.getElementById('modal-serie');
+  serieEl.textContent = b.serie ? ('📚 ' + b.serie) : '';
+  serieEl.style.display = b.serie ? '' : 'none';
+  document.getElementById('modal-rating').textContent = b.rating || '—';
+  document.getElementById('modal-spicy').textContent = b.spicy ? '🌶️'.repeat(b.spicy) : '—';
+  document.getElementById('modal-ending').textContent = b.ending || '—';
+  document.getElementById('modal-genre').textContent = b.subgenre || b.genre || '—';
+  document.getElementById('modal-year').textContent = b.year || '—';
+  document.getElementById('modal-fmt').textContent = (b.fmt || '').toUpperCase();
+  document.getElementById('modal-tropes').innerHTML = (b.tropes || '').split(',')
+    .map(function(t){ return '<span class="modal-trope">' + t.trim() + '</span>'; }).join('');
+  var badge = document.getElementById('modal-lang-badge');
+  badge.className = 'lang-badge-modal ' + (b.lang || 'EN');
+  badge.textContent = b.lang === 'ES' ? '🇦🇷 Español' : '🇺🇸 English';
+  document.getElementById('modal-dl-btn').href = b.link || '#';
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModalDirect(); });
+
+</script>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-sheet" id="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModalDirect()">&#x2715;</button>
+    <div class="modal-header">
+      <div id="modal-lang-badge" class="lang-badge-modal"></div>
+      <div class="modal-title-es" id="modal-title-es"></div>
+      <div class="modal-title-en" id="modal-title-en"></div>
+      <div class="modal-author" id="modal-author"></div>
+      <div class="modal-serie" id="modal-serie"></div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-stats">
+        <div class="modal-stat"><span class="modal-stat-val" id="modal-rating"></span><span class="modal-stat-lbl">Rating</span></div>
+        <div class="modal-stat"><span class="modal-stat-val" id="modal-spicy"></span><span class="modal-stat-lbl">Spice</span></div>
+        <div class="modal-stat"><span class="modal-stat-val" id="modal-ending"></span><span class="modal-stat-lbl">Final</span></div>
+      </div>
+      <div class="modal-divider"></div>
+      <div class="modal-label">Tropes</div>
+      <div class="modal-tropes" id="modal-tropes"></div>
+      <div class="modal-divider"></div>
+      <div class="modal-row">
+        <div><div class="modal-label">Género</div><div class="modal-value" id="modal-genre"></div></div>
+        <div style="text-align:right"><div class="modal-label">A&#241;o</div><div class="modal-value" id="modal-year"></div></div>
+      </div>
+      <div><div class="modal-label">Formato</div><div class="modal-value" id="modal-fmt"></div></div>
+    </div>
+    <a href="#" id="modal-dl-btn" target="_blank" rel="noopener" class="modal-dl-btn">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+      Descargar epub
+    </a>
+  </div>
+</div>
+
 </script>
 </body>
 </html>
