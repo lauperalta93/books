@@ -506,12 +506,12 @@ function renderCards(books) {
     return;
   }
   count.innerHTML = `<strong>${books.length}</strong> libro${books.length!==1?'s':''} encontrado${books.length!==1?'s':''}`;
-  grid.innerHTML = books.map((b, idx) => {
+  grid.innerHTML = books.map(b => {
     const gc  = GENRE_CLASS[b.genre] || 'romance';
     const gi  = GENRE_ICONS[b.genre] || '📚';
     const rf  = redFlagScore(b);
     const sameTitle = b.title_en === b.title_es;
-    return `<article class="book-card" onclick="openModal(${idx})" style="cursor:pointer">
+    return `<article class="book-card" onclick="openModal(this)" data-title="${(b.title_es||b.title||'').replace(/"/g,'&quot;')}" style="cursor:pointer">
       <div class="card-bar ${gc}"></div>
       <div class="card-icon-strip">
         <div class="genre-icon ${gc}">${gi}</div>
@@ -613,8 +613,9 @@ async function loadBooks() {
 loadBooks();
 
 
-function openModal(idx) {
-  var b = (typeof idx === 'number') ? BOOKS.filter(function(x){ return x.link && x.link.length > 0; })[idx] : idx;
+function openModal(el) {
+  var title = el.getAttribute ? el.getAttribute('data-title') : el;
+  var b = BOOKS.find(function(x){ return (x.title_es || x.title || '') === title || (x.title_en || '') === title; });
   if (!b) return;
   document.getElementById('modal-title-es').textContent = b.title_es || b.title || '';
   var en = (b.title_en && b.title_en !== b.title_es) ? b.title_en : '';
