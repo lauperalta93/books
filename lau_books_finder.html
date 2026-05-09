@@ -166,6 +166,12 @@
   .lang-badge-modal.ES{background:rgba(224,123,64,.15);color:#a04010}
   .lang-badge-modal.EN{background:rgba(74,138,191,.15);color:#1a4a8f}
 
+
+  .card-share-btn{width:30px;height:30px;border-radius:50%;border:none;background:rgba(207,94,123,.1);color:var(--rose);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s;padding:0}
+  .card-share-btn:hover{background:rgba(207,94,123,.22)}
+  .share-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1d1013;color:#fff8f2;font:700 13px 'DM Sans';padding:10px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:all .25s;z-index:300;white-space:nowrap}
+  .share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
 </style>
 </head>
 <body>
@@ -501,17 +507,18 @@ function renderCards(books) {
   const grid  = document.getElementById('books-grid');
   const count = document.getElementById('results-count');
   if (!books.length) {
-    grid.innerHTML = '<div class="no-results"><div style="font-size:44px;margin-bottom:12px">📚</div><p>Ningún libro coincide. ¡Probá otra combinación!</p></div>';
+    grid.innerHTML = '<div class="no-results"><div style="font-size:44px;margin-bottom:12px">\u{1F4DA}</div><p>Ning\u00fan libro coincide. \u00a1Prob\u00e1 otra combinaci\u00f3n!</p></div>';
     count.innerHTML = '<strong>0</strong> resultados';
     return;
   }
   count.innerHTML = `<strong>${books.length}</strong> libro${books.length!==1?'s':''} encontrado${books.length!==1?'s':''}`;
   grid.innerHTML = books.map(b => {
-    const gc  = GENRE_CLASS[b.genre] || 'romance';
-    const gi  = GENRE_ICONS[b.genre] || '📚';
-    const rf  = redFlagScore(b);
+    const gc = GENRE_CLASS[b.genre] || 'romance';
+    const gi = GENRE_ICONS[b.genre] || '\u{1F4DA}';
+    const rf = redFlagScore(b);
     const sameTitle = b.title_en === b.title_es;
-    return `<article class="book-card" onclick="openModal(this)" data-title="${(b.title_es||b.title||'').replace(/"/g,'&quot;')}" style="cursor:pointer">
+    const key = encodeURIComponent(b.title_es || b.title || '');
+    return `<article class="book-card" style="cursor:pointer" onclick="openModal('${key}')">
       <div class="card-bar ${gc}"></div>
       <div class="card-icon-strip">
         <div class="genre-icon ${gc}">${gi}</div>
@@ -524,27 +531,33 @@ function renderCards(books) {
         <div class="book-title-es">${b.title_es}</div>
         ${!sameTitle ? `<div class="book-title-en">${b.title_en}</div>` : ''}
         <div class="book-author">${b.author}</div>
-        ${b.serie ? `<div class="book-serie">📚 ${b.serie}</div>` : ''}
+        ${b.serie ? `<div class="book-serie">\u{1F4DA} ${b.serie}</div>` : ''}
         <div class="book-badges">
           <span class="badge badge-genre">${b.subgenre.split('/')[0].trim()}</span>
           ${endingBadge(b.ending)}
         </div>
-        <div class="tropes-list">${b.tropes.split(',').map(t=>`<span>· ${t.trim()}</span>`).join('')}</div>
+        <div class="tropes-list">${b.tropes.split(',').map(t=>`<span>\u00b7 ${t.trim()}</span>`).join('')}</div>
         <div class="spicy-row">
           <div class="spicy-rf">
             <span>${spicyEmoji(b.spicy)}</span>
             <span class="rf-sep">|</span>
-            <span>${'🚩'.repeat(rf)}</span>
+            <span>${'\u{1F6A9}'.repeat(rf)}</span>
           </div>
-          <a href="${b.link}" target="_blank" rel="noopener" class="drive-link">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-            Descargar
-          </a>
+          <div style="display:flex;gap:7px;align-items:center">
+            <a href="${b.link}" target="_blank" rel="noopener" class="drive-link" onclick="event.stopPropagation()">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+              Descargar
+            </a>
+            <button class="card-share-btn" onclick="event.stopPropagation();cardShare('${key}')" title="Compartir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     </article>`;
   }).join('');
 }
+
 
 function applyFilters() { renderCards(BOOKS.filter(matchBook)); }
 
@@ -610,12 +623,29 @@ async function loadBooks() {
   }
 }
 
+
+function cardShare(key) {
+  var b = BOOKS.find(function(x){ return encodeURIComponent(x.title_es||x.title||'') === key; });
+  if (!b) return;
+  var url = b.link || window.location.href;
+  var text = (b.title_es || b.title || '') + ' — ' + (b.author || '');
+  if (navigator.share) {
+    navigator.share({ title: b.title_es || b.title, text: text, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('share-toast');
+      t.classList.add('show');
+      setTimeout(function(){ t.classList.remove('show'); }, 2200);
+    }).catch(function(){ prompt('Copiá el link:', url); });
+  }
+}
+
 loadBooks();
 
 
-function openModal(el) {
-  var title = el.getAttribute ? el.getAttribute('data-title') : el;
-  var b = BOOKS.find(function(x){ return (x.title_es || x.title || '') === title || (x.title_en || '') === title; });
+function openModal(key) {
+  var title = decodeURIComponent(key);
+  var b = BOOKS.find(function(x){ return (x.title_es||x.title||'') === title; });
   if (!b) return;
   document.getElementById('modal-title-es').textContent = b.title_es || b.title || '';
   var en = (b.title_en && b.title_en !== b.title_es) ? b.title_en : '';
